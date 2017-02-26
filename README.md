@@ -67,7 +67,7 @@ Tested with:
 - Check the difference between two requests, eg:
 
 ```
-     /apache/logs/access.log:127.0.0.1 - - [2017-02-26 18:41:49.904468] "GET /S3oEgTCt.se HTTP/1.1" 200 15 "-" "Mozilla/5.00 (Nikto/2.1.5) (Evasions:None) (Test:map_codes)" localhost 127.0.0.1 81 proxy-server - + "-" - - - 146 221 -% 1035295 13314 1008631 1444 5 0
+     /apache/logs/access.log:127.0.0.1 - - [2017-02-26 18:41:49.904468] "GET /S3oEgTCt.se HTTP/1.1" 200 15 "-" "Mozilla/5.00 (Nikto/2.1.5) (Evasions:None) (Test:map_codes)" localhost 127.0.0.1 81 proxy-server - + "-" WLMTXX8AAQEAACgGnrcAAAAL - - 146 221 -% 1035295 13314 1008631 1444 5 0
      /apache/logs/access-replay.log:127.0.0.1 - - [2017-02-26 18:42:05.730041] "GET /S3oEgTCt.se HTTP/1.1" 200 15 "-" "Mozilla/5.00 (Nikto/2.1.5) (Evasions:None) (Test:map_codes)" localhost 127.0.0.1 81 proxy-server - - "-" WLMTXX8AAQEAACgGnrcAAAAL - - 229 185 -% 1021614 2717 1013479 883 7 0
 ```
 
