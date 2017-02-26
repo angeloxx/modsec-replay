@@ -22,15 +22,16 @@ Tested with:
 
 - Configure your Apache Web Server to log all requests so you can capture, in current running environment, all requests:
 
-
+```
     SecAuditEngine                On     
     SecAuditLogParts              ABEFHIJKZ    
     ErrorLogFormat          "[%{cu}t] [%-m:%-l] %-a %-L %M"
+```
 
 - Copy the audit (and log) file to the test Apache Web Server
 - Add a proxy configuration that sends requests to the modsec-replay-server all the requests and log the X-Original-Id that contains the original request identifier to easily compare the behaviour of new configuration with the same request:
 	
-
+```
     <VirtualHost 0.0.0.0:80>
         ProxyPass           / http://127.0.0.1:8081/   
         ProxyPassReverse    / http://127.0.0.1:8081/   
@@ -42,16 +43,19 @@ Tested with:
 	       AllowOverride None   
 	    </Directory>   
     </VirtualHost>    
+```
 
 - Start the server on 8081/tcp port and feed it with the audit log directory
 
-
+```
 	./modsec-replay-server.py --source /apache/saved-logs/audit/ --port 8081
+```
 
 - Start the request sender:
 
-
+```
 	./modsec-replay-client.py --source /apache/saved-logs/audit/ --port 80 --host localhost
+```
 
 # Todo
 
