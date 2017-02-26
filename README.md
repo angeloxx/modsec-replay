@@ -8,7 +8,7 @@ This suite was born to answer to the simple question: how can we migrate from Mo
 # How does it work?
 
 The client component reads an audit file (or audit directory) and sends all the requests to a different server, using same header and content of the original request and adding a X-Replay-Id header that permit to the server component to find the correct audit file
-The server component receives the request, reads the X-Replay-Id and send the associated answer from the same audit file
+The server component receives the request, reads the X-Replay-Id and send the associated answer from the same audit file; if the request is not not valid the server reply with a basic 200 page.
 
 ## Compatibility
 
@@ -25,7 +25,7 @@ Tested with:
 ```
     SecAuditEngine                On     
     SecAuditLogParts              ABEFHIJKZ    
-    ErrorLogFormat          "[%{cu}t] [%-m:%-l] %-a %-L %M"
+    ErrorLogFormat                "[%{cu}t] [%-m:%-l] %-a %-L %M"
 ```
 
 - Copy the audit (and log) file to the test Apache Web Server
@@ -37,6 +37,13 @@ Tested with:
         ProxyPassReverse    / http://127.0.0.1:8081/   
         ErrorLogFormat          "[%{cu}t] [%-m:%-l] %-a %{X-Original-Id}i %M"   
         ErrorLog                logs/error.log   
+
+        # Original log format should be (see https://www.netnea.com/cms/apache-tutorial-5_extending-access-log/)
+        # LogFormat               "%h %{GEOIP_COUNTRY_CODE}e %u [%{%Y-%m-%d %H:%M:%S}t.%{usec_frac}t] \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\" %v %A %p %R %{BALANCER_WORKER_ROUTE}e %X \"%{cookie}n\" %{UNIQUE_ID}e %{SSL_PROTOCOL}x %{SSL_CIPHER}x %I %O %{ratio}n%% %D %{ModSecTimeIn}e %{ApplicationTime}e %{ModSecTimeOut}e %{ModSecAnomalyScoreIn}e %{ModSecAnomalyScoreOut}e" extended
+
+        LogFormat               "%h %{GEOIP_COUNTRY_CODE}e %u [%{%Y-%m-%d %H:%M:%S}t.%{usec_frac}t] \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\" %v %A %p %R %{BALANCER_WORKER_ROUTE}e %X \"%{cookie}n\" %{X-Original-Id}i %{SSL_PROTOCOL}x %{SSL_CIPHER}x %I %O %{ratio}n%% %D %{ModSecTimeIn}e %{ApplicationTime}e %{ModSecTimeOut}e %{ModSecAnomalyScoreIn}e %{ModSecAnomalyScoreOut}e" extended2
+        CustomLog               logs/access-replay.log extended2
+
 	    <Directory /apache/htdocs>   
 	       Require all granted   
 	       Options None   
@@ -57,7 +64,17 @@ Tested with:
 	./modsec-replay-client.py --source /apache/saved-logs/audit/ --port 80 --host localhost
 ```
 
+- Check the difference between two requests, eg:
+
+```
+     /apache/logs/access.log:127.0.0.1 - - [2017-02-26 18:41:49.904468] "GET /S3oEgTCt.se HTTP/1.1" 200 15 "-" "Mozilla/5.00 (Nikto/2.1.5) (Evasions:None) (Test:map_codes)" localhost 127.0.0.1 81 proxy-server - + "-" - - - 146 221 -% 1035295 13314 1008631 1444 5 0
+     /apache/logs/access-replay.log:127.0.0.1 - - [2017-02-26 18:42:05.730041] "GET /S3oEgTCt.se HTTP/1.1" 200 15 "-" "Mozilla/5.00 (Nikto/2.1.5) (Evasions:None) (Test:map_codes)" localhost 127.0.0.1 81 proxy-server - - "-" WLMTXX8AAQEAACgGnrcAAAAL - - 229 185 -% 1021614 2717 1013479 883 7 0
+```
+
+The original request is sent to a web server with paranoia level 1 and the replayed request is sent to web server with paranoia level 5
+
 # Todo
 
 - Probably can be useful to have a tool that compare the error log of the original request to the replayed one to check if the new modified configuration is good or not.
-	- The tool is not binary safe, I need to check if ModSecurity audit file contains all info to reproduce some binary operation like file upload/download         
+- The tool is not binary safe, I need to check if ModSecurity audit file contains all info to reproduce some binary operation like file upload/download
+- Replace the socket server with a real http server in modsec-replay-server

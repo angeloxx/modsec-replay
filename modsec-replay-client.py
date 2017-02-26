@@ -8,17 +8,18 @@ def sendRequest(filename,host,port,ssl):
         print "I: Valid audit file found %s" % (filename)
         try: 
             # Get headers, remove X-REPLAY-ID if found and add it again
-            headers = filter( lambda x: not (x.startswith("X-Replay-Id:") or x.startswith("X-Forwarded:")), auditparser.getAuditPart(filename,"REQUEST-HEADER").split("\n"))
-            headers.insert(1,"X-Replay-Id: %s" % auditparser.requestHash(filename))
+            headers = filter( lambda x: not (x.startswith("X-Replay-Id:") or x.startswith("X-Forwarded") or x.startswith("Connection: Keep-Alive")), auditparser.getAuditPart(filename,"REQUEST-HEADER").split("\n"))
+            headers.insert(2,"X-Replay-Id: %s" % auditparser.requestHash(filename))
+            headers.insert(3,"X-Original-Id: %s" % auditparser.getAuditPart(filename,"UNIQUE-ID"))
+            headers.insert(4,"Connection: Close")
             body = auditparser.getAuditPart(filename,"REQUEST-BODY")
 
             # TODO: send additional header that contains request-id needed by the loop
             s = socket.socket(socket.AF_INET)
-            s.settimeout(1)
             s.connect((str(host),int(port)))
 
             for header in headers:
-                s.send("%s\r\n" % header.decode('string_escape'))
+                s.send(header.decode('string_escape') + "\r\n")
 
             if body != "":
                 s.send(body)
@@ -31,22 +32,27 @@ def sendRequest(filename,host,port,ssl):
                     print "   %s" % li
                 print "   ==================================="
 
-            s.settimeout(1)
+            s.settimeout(5)
             response = ""
-            try:
-                response = response + s.recv(2048)    
-            except socket.timeout:
-                pass
-            finally:
-                if options.verbose >= 2:
-                    print "D: RECEIVED =========================="
-                    for li in response.split("\n"):
-                        print "   %s" % li
-                    print "   ==================================="
+            answer = True
+            while answer:
                 try:
-                    s.close()
+                    newdata = s.recv(2048)
+                    if newdata == "":
+                        answer = False
+                    else:
+                        response = response + newdata
                 except:
-                    pass
+                    answer = False
+            if options.verbose >= 2:
+                print "D: RECEIVED =========================="
+                for li in response.split("\n"):
+                    print "   %s" % li
+                print "   ==================================="
+            try:
+                s.close()
+            except:
+                pass
 
         except Exception, e:
             print "E: unable to send %s to %s:%s" % (filename,host,port)

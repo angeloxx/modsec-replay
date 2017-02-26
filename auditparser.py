@@ -45,14 +45,13 @@ def getAuditPart(filename,part):
     outBuffer = ""
     if os.path.isfile(filename) and isValidFile(filename):
         with open(filename, "r") as f:
-            for line in f.readlines():
+            for line in f.read().split('\n'):
                 li = line.strip()
                 if li.startswith("--") and li.endswith("-A--"):
-                    if part == "LOG":
+                    if part == "LOG" or part == "UNIQUE-ID":
                         captureFlag = True
                     else:
                         captureFlag = False
-
                 elif li.startswith("--") and li.endswith("-B--"):
                     if part == "REQUEST-HEADER":
                         captureFlag = True
@@ -78,7 +77,9 @@ def getAuditPart(filename,part):
                     captureFlag = False
                 if captureFlag:
                     if lineNumber > 0:
-                        outBuffer = outBuffer + line
+                        outBuffer = outBuffer + line + "\n"
+                        if part == "UNIQUE-ID":
+                            return line.split("]")[1].strip().split(" ")[0]
                     lineNumber = lineNumber + 1
         return outBuffer
     return None
