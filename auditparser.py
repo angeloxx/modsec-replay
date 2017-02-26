@@ -74,7 +74,8 @@ def getAuditPart(filename,part):
                         captureFlag = True
                     else:
                         captureFlag = False
-        
+                elif li.startswith("--") and li.endswith("--") and len(li) == 14:
+                    captureFlag = False
                 if captureFlag:
                     if lineNumber > 0:
                         outBuffer = outBuffer + line
