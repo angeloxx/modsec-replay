@@ -8,7 +8,7 @@ def sendRequest(filename,host,port,ssl):
         print "I: Valid audit file found %s" % (filename)
         try: 
             # Get headers, remove X-REPLAY-ID if found and add it again
-            headers = filter( lambda x: not x.startswith("X-Replay-Id:"), auditparser.getAuditPart(filename,"REQUEST-HEADER").split("\n"))
+            headers = filter( lambda x: not (x.startswith("X-Replay-Id:") or x.startswith("X-Forwarded:")), auditparser.getAuditPart(filename,"REQUEST-HEADER").split("\n"))
             headers.insert(1,"X-Replay-Id: %s" % auditparser.requestHash(filename))
             body = auditparser.getAuditPart(filename,"REQUEST-BODY")
 
@@ -30,7 +30,6 @@ def sendRequest(filename,host,port,ssl):
                 for li in body.split("\n"):
                     print "   %s" % li
                 print "   ==================================="
-
 
             s.settimeout(1)
             response = ""
