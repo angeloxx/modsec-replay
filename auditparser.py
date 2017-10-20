@@ -1,9 +1,9 @@
-#!/usr/bin/python 
+#!/usr/bin/env python 
 #
 #
 # This script parses the audit log
-# Needs SecAuditLogParts with ABCDEF
-#
+# Needs SecAuditLogParts with ABCDEF, Native or JSON format
+# JSON format support by spartantri
 
 import os, hashlib, fnmatch
 
@@ -28,12 +28,14 @@ def isValidFile(filename):
     with open(filename, "r") as f:
         for line in f.readlines():
             li = line.strip()
-            if li.startswith("--") and li.endswith("-A--"):
-                validCount = validCount+1
+            if li.startswith('{"transaction":{"time":"'):
+                validCount = 3
+            elif li.startswith("--") and li.endswith("-A--"):
+                validCount += 1
             elif li.startswith("--") and li.endswith("-B--"):
-                validCount = validCount+1
+                validCount += 1
             elif li.startswith("--") and li.endswith("-E--"):
-                validCount = validCount+1
+                validCount += 1
     return validCount >= 3
 
 def requestHash(filename):
@@ -47,7 +49,9 @@ def getAuditPart(filename,part):
         with open(filename, "r") as f:
             for line in f.read().split('\n'):
                 li = line.strip()
-                if li.startswith("--") and li.endswith("-A--"):
+                if li.startswith('{"transaction":{"time":"'):
+                    captureFlag = True
+                elif li.startswith("--") and li.endswith("-A--"):
                     if part == "LOG" or part == "UNIQUE-ID":
                         captureFlag = True
                     else:
