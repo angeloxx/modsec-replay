@@ -42,7 +42,7 @@ def requestHash(filename):
     return hashlib.md5(os.path.basename(filename)).hexdigest()
 
 def getAuditPart(filename,part):
-    captureFlag = False 
+    captureFlag = jsonFlag = False 
     lineNumber = 0
     outBuffer = ""
     if os.path.isfile(filename) and isValidFile(filename):
@@ -50,7 +50,31 @@ def getAuditPart(filename,part):
             for line in f.read().split('\n'):
                 li = line.strip()
                 if li.startswith('{"transaction":{"time":"'):
-                    captureFlag = True
+                    import json
+                    if part == "LOG":
+                        return str(json.loads(j)['request']['request_line'])
+                    elif part == "REQUEST-HEADER":
+                        for header in json.loads(j)["request"]["headers"].keys():
+                            outBuffer=''.join([outBuffer, header, ":", json.loads(j)["request"]["headers"][header], "\n")
+                        return outBuffer
+                    elif part == "REQUEST-BODY":
+                        try:
+                            outBuffer=json.loads(j)["request"]["body"][0]
+                        except:
+                            outBuffer=""
+                        return outBuffer
+                    elif part == "RESPONSE-HEADER":
+                        for header in json.loads(j)["response"]["headers"].keys()
+                            outBuffer=''.join([outBuffer, header, ":", json.loads(j)["response"]["headers"][header], "\n")
+                        return outBuffer
+                    elif part == "RESPONSE-BODY":
+                        try:
+                            outBuffer=json.loads(j)["response"]["body"][0]
+                        except:
+                            outBuffer=""
+                        return outBuffer
+                    elif part == "UNIQUE-ID":
+                        return str(json.loads(j)['transaction']['transaction_id'])
                 elif li.startswith("--") and li.endswith("-A--"):
                     if part == "LOG" or part == "UNIQUE-ID":
                         captureFlag = True
@@ -61,7 +85,6 @@ def getAuditPart(filename,part):
                         captureFlag = True
                     else:
                         captureFlag = False
-
                 elif li.startswith("--") and li.endswith("-C--"):
                     if part == "REQUEST-BODY":
                         captureFlag = True
