@@ -52,29 +52,29 @@ def getAuditPart(filename,part):
                 if li.startswith('{"transaction":{"time":"'):
                     import json
                     if part == "LOG":
-                        return str(json.loads(j)['request']['request_line'])
+                        return str(json.loads(li)['request']['request_line'])
                     elif part == "REQUEST-HEADER":
-                        for header in json.loads(j)["request"]["headers"].keys():
-                            outBuffer=''.join([outBuffer, header, ":", json.loads(j)["request"]["headers"][header], "\n"])
+                        for header in json.loads(li)["request"]["headers"].keys():
+                            outBuffer=''.join([outBuffer, header, ":", json.loads(li)["request"]["headers"][header], "\n"])
                         return outBuffer
                     elif part == "REQUEST-BODY":
                         try:
-                            outBuffer=json.loads(j)["request"]["body"][0]
+                            outBuffer=json.loads(li)["request"]["body"][0]
                         except:
                             outBuffer=""
                         return outBuffer
                     elif part == "RESPONSE-HEADER":
-                        for header in json.loads(j)["response"]["headers"].keys():
-                            outBuffer=''.join([outBuffer, header, ":", json.loads(j)["response"]["headers"][header], "\n"])
+                        for header in json.loads(li)["response"]["headers"].keys():
+                            outBuffer=''.join([outBuffer, header, ":", json.loads(li)["response"]["headers"][header], "\n"])
                         return outBuffer
                     elif part == "RESPONSE-BODY":
                         try:
-                            outBuffer=json.loads(j)["response"]["body"][0]
+                            outBuffer=json.loads(li)["response"]["body"][0]
                         except:
                             outBuffer=""
                         return outBuffer
                     elif part == "UNIQUE-ID":
-                        return str(json.loads(j)['transaction']['transaction_id'])
+                        return str(json.loads(li)['transaction']['transaction_id'])
                 elif li.startswith("--") and li.endswith("-A--"):
                     if part == "LOG" or part == "UNIQUE-ID":
                         captureFlag = True
