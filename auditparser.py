@@ -64,7 +64,7 @@ def getAuditPart(filename,part):
                             outBuffer=""
                         return outBuffer
                     elif part == "RESPONSE-HEADER":
-                        for header in json.loads(j)["response"]["headers"].keys()
+                        for header in json.loads(j)["response"]["headers"].keys():
                             outBuffer=''.join([outBuffer, header, ":", json.loads(j)["response"]["headers"][header], "\n"])
                         return outBuffer
                     elif part == "RESPONSE-BODY":
