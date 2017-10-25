@@ -13,7 +13,7 @@ def sendRequest(filename,host,port,ssl,offset):
         max_offset = 0
         if offset>0:
             max_offset=isValidOffset(filename,offset)
-            if max_offset = 0:
+            if max_offset == 0:
                 offset=0
         for pointer in xrange(offset,max_offset):
             try: 
