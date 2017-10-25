@@ -86,10 +86,10 @@ if options.verbose > 0:
     print "I: Verbose %d" % options.verbose
 
 if os.path.isfile(options.source):
-    sendRequest(options.source,options.remotehost,options.remoteport,options.usessl,offset)
+    sendRequest(options.source,options.remotehost,options.remoteport,options.usessl,options.offset)
 elif os.path.isdir(options.source):
     for filename in auditparser.findFiles(options.source, '*'):
-        sendRequest(filename,options.remotehost,options.remoteport,options.usessl,offset)
+        sendRequest(filename,options.remotehost,options.remoteport,options.usessl,options.offset)
 else:
     print "E: File or dir does not exist: %s" % (options.source)
     
