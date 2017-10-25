@@ -10,59 +10,65 @@ from optparse import OptionParser
 def sendRequest(filename,host,port,ssl,offset):
     if auditparser.isValidFile(filename):
         print "I: Valid audit file found %s" % (filename)
-        try: 
-            # Get headers, remove X-REPLAY-ID if found and add it again
-            headers = filter( lambda x: not (x.startswith("X-Replay-Id:") or x.startswith("X-Forwarded") or x.startswith("Connection: Keep-Alive")), auditparser.getAuditPart(filename,"REQUEST-HEADER",offset).split("\n"))
-            headers.insert(2,"X-Replay-Id: %s" % auditparser.requestHash(filename))
-            headers.insert(3,"X-Original-Id: %s" % auditparser.getAuditPart(filename,"UNIQUE-ID",offset))
-            headers.insert(4,"Connection: Close")
-            body = auditparser.getAuditPart(filename,"REQUEST-BODY",offset)
+        max_offset = 0
+        if offset>0:
+            max_offset=isValidOffset(filename,offset)
+            if max_offset = 0:
+                offset=0
+        for pointer in xrange(offset,max_offset):
+            try: 
+                # Get headers, remove X-REPLAY-ID if found and add it again
+                headers = filter( lambda x: not (x.startswith("X-Replay-Id:") or x.startswith("X-Forwarded") or x.startswith("Connection: Keep-Alive")), auditparser.getAuditPart(filename,"REQUEST-HEADER",pointer).split("\n"))
+                headers.insert(2,"X-Replay-Id: %s" % auditparser.requestHash(filename))
+                headers.insert(3,"X-Original-Id: %s" % auditparser.getAuditPart(filename,"UNIQUE-ID",pointer))
+                headers.insert(4,"Connection: Close")
+                body = auditparser.getAuditPart(filename,"REQUEST-BODY",pointer)
 
-            # TODO: send additional header that contains request-id needed by the loop
-            s = socket.socket(socket.AF_INET)
-            s.connect((str(host),int(port)))
+                # TODO: send additional header that contains request-id needed by the loop
+                s = socket.socket(socket.AF_INET)
+                s.connect((str(host),int(port)))
 
-            for header in headers:
-                s.send(header.decode('string_escape') + "\r\n")
+                for header in headers:
+                    s.send(header.decode('string_escape') + "\r\n")
 
-            if body != "":
-                s.send(body)
+                if body != "":
+                    s.send(body)
 
-            if options.verbose >= 2:
-                print "D: SENT =============================="
-                for li in headers:
-                    print "   %s" % li
-                for li in body.split("\n"):
-                    print "   %s" % li
-                print "   ==================================="
+                if options.verbose >= 2:
+                    print "D: SENT =============================="
+                    for li in headers:
+                        print "   %s" % li
+                    for li in body.split("\n"):
+                        print "   %s" % li
+                    print "   ==================================="
 
-            s.settimeout(5)
-            response = ""
-            answer = True
-            while answer:
-                try:
-                    newdata = s.recv(2048)
-                    if newdata == "":
+                s.settimeout(5)
+                response = ""
+                answer = True
+                while answer:
+                    try:
+                        newdata = s.recv(2048)
+                        if newdata == "":
+                            answer = False
+                        else:
+                            response = response + newdata
+                    except:
                         answer = False
-                    else:
-                        response = response + newdata
+                if options.verbose >= 2:
+                    print "D: RECEIVED =========================="
+                    for li in response.split("\n"):
+                        print "   %s" % li
+                    print "   ==================================="
+                try:
+                    s.close()
                 except:
-                    answer = False
-            if options.verbose >= 2:
-                print "D: RECEIVED =========================="
-                for li in response.split("\n"):
-                    print "   %s" % li
-                print "   ==================================="
-            try:
-                s.close()
-            except:
-                pass
+                    pass
 
-        except Exception, e:
-            print "E: unable to send %s to %s:%s" % (filename,host,port)
-            traceback.print_exc()
-    else:
-        print "E: Invalid audit file %s" % (filename)
+            except Exception, e:
+                print "E: unable to send %s to %s:%s" % (filename,host,port)
+                traceback.print_exc()
+        else:
+            print "E: Invalid audit file %s" % (filename)
 
 parser = OptionParser()
 parser.add_option("--source", dest="source", help="use recursively the specified audit directory as source", default="/var/log/apache/audit/")
