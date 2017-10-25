@@ -1,4 +1,8 @@
 #!/usr/bin/python
+#
+#
+# serial format support by spartantri
+
 import os, traceback, auditparser, socket
 from optparse import OptionParser
 
@@ -69,16 +73,17 @@ parser.add_option("--usessl", dest="usessl", help="send request to the specified
 parser.add_option("--timeout", dest="timeout", help="send timeout", type="int", default=10)
 parser.add_option("-v", "--verbose", dest="verbose", help="increase verbosity level (0..9)", action="count", default=0)
 parser.add_option("--delay", dest="delay", help="delay between two requests in ms", type="int", default=100)
+parser.add_option("--offset", dest="offset", help="jump to offset in the logfile", type="int", default=0)
 (options, args) = parser.parse_args()
 
 if options.verbose > 0:
     print "I: Verbose %d" % options.verbose
 
 if os.path.isfile(options.source):
-    sendRequest(options.source,options.remotehost,options.remoteport,options.usessl)
+    sendRequest(options.source,options.remotehost,options.remoteport,options.usessl,offset)
 elif os.path.isdir(options.source):
     for filename in auditparser.findFiles(options.source, '*'):
-        sendRequest(filename,options.remotehost,options.remoteport,options.usessl)
+        sendRequest(filename,options.remotehost,options.remoteport,options.usessl,offset)
 else:
     print "E: File or dir does not exist: %s" % (options.source)
     
