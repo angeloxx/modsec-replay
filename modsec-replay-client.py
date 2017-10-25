@@ -12,7 +12,7 @@ def sendRequest(filename,host,port,ssl,offset):
         print "I: Valid audit file found %s" % (filename)
         max_offset = 0
         if offset>0:
-            max_offset=isValidOffset(filename,offset)
+            max_offset=auditparser.isValidOffset(filename,offset)
             if max_offset == 0:
                 offset=0
         for pointer in xrange(offset,max_offset):
