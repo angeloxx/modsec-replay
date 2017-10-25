@@ -15,7 +15,7 @@ def findFiles(directory, pattern):
                 filename = os.path.join(root, basename)
                 yield filename
 
-def isValidOffset(filename,offset):
+def isValidOffset(filename,offset=0):
     """Check if the log file offset is valid
     
     Args:
@@ -56,7 +56,7 @@ def isValidFile(filename):
 def requestHash(filename):
     return hashlib.md5(os.path.basename(filename)).hexdigest()
 
-def getAuditPart(filename,part,offset):
+def getAuditPart(filename,part,offset=0):
     captureFlag = jsonFlag = False 
     lineNumber = 0
     outBuffer = ""
