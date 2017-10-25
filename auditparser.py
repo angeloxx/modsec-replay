@@ -15,6 +15,21 @@ def findFiles(directory, pattern):
                 filename = os.path.join(root, basename)
                 yield filename
 
+def isValidOffset(filename,offset):
+    """Check if the log file offset is valid
+    
+    Args:
+        filename: The complete path of the file.
+    
+    Returns:
+        Maximum offset (line count) if valid. Zero if invalid.
+    """
+    num_lines = sum(1 for line in open(filename))
+    if offset<=num_lines:
+        return num_lines
+    else:
+        return 0
+
 def isValidFile(filename):
     """Check if a audit file is a valid and contains all needed sections (ABE)
 
