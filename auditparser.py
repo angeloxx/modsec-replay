@@ -41,13 +41,17 @@ def isValidFile(filename):
 def requestHash(filename):
     return hashlib.md5(os.path.basename(filename)).hexdigest()
 
-def getAuditPart(filename,part):
+def getAuditPart(filename,part,offset):
     captureFlag = jsonFlag = False 
     lineNumber = 0
     outBuffer = ""
     if os.path.isfile(filename) and isValidFile(filename):
         with open(filename, "r") as f:
             for line in f.read().split('\n'):
+                if offset>0:
+                    if lineNumber<offset:
+                        lineNumber+=1
+                        continue
                 li = line.strip()
                 if li.startswith('{"transaction":{"time":"'):
                     import json
