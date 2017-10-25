@@ -7,16 +7,16 @@ import os, traceback, auditparser, socket
 from optparse import OptionParser
 
 # Send the single request
-def sendRequest(filename,host,port,ssl):
+def sendRequest(filename,host,port,ssl,offset):
     if auditparser.isValidFile(filename):
         print "I: Valid audit file found %s" % (filename)
         try: 
             # Get headers, remove X-REPLAY-ID if found and add it again
-            headers = filter( lambda x: not (x.startswith("X-Replay-Id:") or x.startswith("X-Forwarded") or x.startswith("Connection: Keep-Alive")), auditparser.getAuditPart(filename,"REQUEST-HEADER").split("\n"))
+            headers = filter( lambda x: not (x.startswith("X-Replay-Id:") or x.startswith("X-Forwarded") or x.startswith("Connection: Keep-Alive")), auditparser.getAuditPart(filename,"REQUEST-HEADER",offset).split("\n"))
             headers.insert(2,"X-Replay-Id: %s" % auditparser.requestHash(filename))
-            headers.insert(3,"X-Original-Id: %s" % auditparser.getAuditPart(filename,"UNIQUE-ID"))
+            headers.insert(3,"X-Original-Id: %s" % auditparser.getAuditPart(filename,"UNIQUE-ID",offset))
             headers.insert(4,"Connection: Close")
-            body = auditparser.getAuditPart(filename,"REQUEST-BODY")
+            body = auditparser.getAuditPart(filename,"REQUEST-BODY",offset)
 
             # TODO: send additional header that contains request-id needed by the loop
             s = socket.socket(socket.AF_INET)
