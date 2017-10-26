@@ -36,7 +36,7 @@ def sendRequest(filename,host,port,usessl,offset,remotehostname):
                 else:
                     s = socket.socket(socket.AF_INET)
                 s.connect((str(host),int(port)))
-                s.send(auditparser.getAuditPart(filename,"LOG",pointer))
+                s.send(auditparser.getAuditPart(filename,"LOG",pointer) + "\r\n")
                 for header in headers:
                     s.send(header.decode('string_escape') + "\r\n")
 
