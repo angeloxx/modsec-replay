@@ -27,10 +27,12 @@ def sendRequest(filename,host,port,usessl,offset,remotehostname):
                 # TODO: send additional header that contains request-id needed by the loop
                 if usessl:
                     import ssl
+                    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    sock.settimeout(10)
                     if remotehostname != "":
-                        s = ssl.wrap_socket(sock, ssl_version=ssl.PROTOCOL_TLSv1_2, server_hostname=str(hostname))
+                        s = ssl.wrap_socket(sock, ssl_version=ssl.PROTOCOL_TLSv1_2)
                     else:
-                        s = ssl.wrap_socket(sock, ssl_version=ssl.PROTOCOL_TLSv1_2, server_hostname=str(host))
+                        s = ssl.wrap_socket(sock, ssl_version=ssl.PROTOCOL_TLSv1_2)
                 else:
                     s = socket.socket(socket.AF_INET)
                 s.connect((str(host),int(port)))
