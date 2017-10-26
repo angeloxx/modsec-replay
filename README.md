@@ -10,13 +10,15 @@ This suite was born to answer to the simple question: how can we migrate from Mo
 The client component reads an audit file (or audit directory) and sends all the requests to a different server, using same header and content of the original request and adding a X-Replay-Id header that permit to the server component to find the correct audit file
 The server component receives the request, reads the X-Replay-Id and send the associated answer from the same audit file; if the request is not not valid the server reply with a basic 200 page.
 
+The client component may use either the native or JSON format in serial and serial or concurrent log types. The detection of the log format is automatic, however the if a log file contains more than a single transaction the ```--offset=``` option can be used to set the line number to start, in JSON format every line is a separate transaction so that would also mean skipping to a given transaction and start sending from there, if no offset is especified zero (0) is assumed and only the first record is going to be sent, but if iterating through the entire log is needed this must be set to one (1). 
+
 ## Compatibility
 
 Tested with:
 
-- python 2.7 on Ubuntu 16.10
+- python 2.7 on Ubuntu 16.10 and Kali Rolling
 - modsecurity 2.9.1
-- apache 2.4.25
+- apache +2.4.25/+2.2.34 (except error log format)
 
 ## Usage
 
@@ -24,7 +26,7 @@ Tested with:
 
 ```
     SecAuditEngine                On     
-    SecAuditLogParts              ABEFHIJKZ    
+    SecAuditLogParts              ABEFHIJZ    
     ErrorLogFormat                "[%{cu}t] [%-m:%-l] %-a %-L %M"
 ```
 
