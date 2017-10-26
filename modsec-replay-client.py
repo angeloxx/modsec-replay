@@ -7,7 +7,7 @@ import os, traceback, auditparser, socket
 from optparse import OptionParser
 
 # Send the single request
-def sendRequest(filename,host,port,ssl,offset):
+def sendRequest(filename,host,port,usessl,offset,remotehostname):
     if auditparser.isValidFile(filename):
         print "I: Valid audit file found %s" % (filename)
         max_offset = 0
@@ -25,7 +25,14 @@ def sendRequest(filename,host,port,ssl,offset):
                 body = auditparser.getAuditPart(filename,"REQUEST-BODY",pointer)
 
                 # TODO: send additional header that contains request-id needed by the loop
-                s = socket.socket(socket.AF_INET)
+                if usessl:
+                    import ssl
+                    if remotehostname != "":
+                        s = ssl.wrap_socket(sock, ssl_version=ssl.PROTOCOL_TLSv1_2, server_hostname=str(hostname))
+                    else:
+                        s = ssl.wrap_socket(sock, ssl_version=ssl.PROTOCOL_TLSv1_2, server_hostname=str(host))
+                else:
+                    s = socket.socket(socket.AF_INET)
                 s.connect((str(host),int(port)))
 
                 for header in headers:
@@ -80,16 +87,17 @@ parser.add_option("--timeout", dest="timeout", help="send timeout", type="int", 
 parser.add_option("-v", "--verbose", dest="verbose", help="increase verbosity level (0..9)", action="count", default=0)
 parser.add_option("--delay", dest="delay", help="delay between two requests in ms", type="int", default=100)
 parser.add_option("--offset", dest="offset", help="jump to offset in the logfile", type="int", default=0)
+parser.add_option("--hostname", dest="remotehostname", help="send request to the specified hostname SNI", default="")
 (options, args) = parser.parse_args()
 
 if options.verbose > 0:
     print "I: Verbose %d" % options.verbose
 
 if os.path.isfile(options.source):
-    sendRequest(options.source,options.remotehost,options.remoteport,options.usessl,options.offset)
+    sendRequest(options.source,options.remotehost,options.remoteport,options.usessl,options.offset,options.remotehostname)
 elif os.path.isdir(options.source):
     for filename in auditparser.findFiles(options.source, '*'):
-        sendRequest(filename,options.remotehost,options.remoteport,options.usessl,options.offset)
+        sendRequest(filename,options.remotehost,options.remoteport,options.usessl,options.offset,options.remotehostname)
 else:
     print "E: File or dir does not exist: %s" % (options.source)
     
