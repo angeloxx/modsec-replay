@@ -9,16 +9,21 @@ from optparse import OptionParser
 # Send the single request
 def sendRequest(filename,host,port,usessl,offset,remotehostname):
     if auditparser.isValidFile(filename):
-        print "I: Valid audit file found %s" % (filename)
-        max_offset = 0
-        if offset>0:
-            max_offset=auditparser.isValidOffset(filename,offset)
-            if max_offset == 0:
-                offset=0
+        format = auditparser.getAuditType(filename)
+        print "I: Valid audit file found %s (%s format)" % (filename, format)
+
+        if format == "JSON":
+            max_offset = 0
+            if offset>0:
+                max_offset=auditparser.isValidOffset(filename,offset)
+                if max_offset == 0:
+                    offset=0
+        else:
+            max_offset = 1
         for pointer in xrange(offset,max_offset):
             try: 
                 # Get headers, remove X-REPLAY-ID if found and add it again
-                headers = filter( lambda x: not (x.startswith("X-Replay-Id:") or x.startswith("X-Forwarded") or x.startswith("Connection: Keep-Alive")), auditparser.getAuditPart(filename,"REQUEST-HEADER",pointer).split("\n"))
+                headers = filter( lambda x: not (x.startswith("X-Replay-Id:") or x.startswith("X-Forwarded") or x.startswith("Connection: ")), auditparser.getAuditPart(filename,"REQUEST-HEADER",pointer).split("\n"))
                 headers.insert(2,"X-Replay-Id: %s" % auditparser.requestHash(filename))
                 headers.insert(3,"X-Original-Id: %s" % auditparser.getAuditPart(filename,"UNIQUE-ID",pointer))
                 headers.insert(4,"Connection: Close")
@@ -36,7 +41,10 @@ def sendRequest(filename,host,port,usessl,offset,remotehostname):
                 else:
                     s = socket.socket(socket.AF_INET)
                 s.connect((str(host),int(port)))
-                s.send(auditparser.getAuditPart(filename,"LOG",pointer) + "\r\n")
+
+                if format == "JSON":
+                    s.send(auditparser.getAuditPart(filename,"LOG",pointer) + "\r\n")
+
                 for header in headers:
                     s.send(header.decode('string_escape') + "\r\n")
 
@@ -76,8 +84,8 @@ def sendRequest(filename,host,port,usessl,offset,remotehostname):
             except Exception, e:
                 print "E: unable to send %s to %s:%s" % (filename,host,port)
                 traceback.print_exc()
-        else:
-            print "E: Invalid audit file %s" % (filename)
+#        else:
+#            print "E: Invalid audit file %s" % (filename)
 
 parser = OptionParser()
 parser.add_option("--source", dest="source", help="use recursively the specified audit directory as source", default="/var/log/apache/audit/")

@@ -56,11 +56,21 @@ def isValidFile(filename):
 def requestHash(filename):
     return hashlib.md5(os.path.basename(filename)).hexdigest()
 
+def getAuditType(filename):
+    if os.path.isfile(filename) and isValidFile(filename):
+        with open(filename, "r") as f:
+            firstline = f.readline()
+            if firstline.startswith('{"transaction":{"time":"'):
+                return "JSON"
+            else:
+                return "STANDARD"
+
 def getAuditPart(filename,part,offset=0):
     captureFlag = jsonFlag = False 
     lineNumber = 0
     outBuffer = ""
     if os.path.isfile(filename) and isValidFile(filename):
+        filetype = getAuditType(filename)
         with open(filename, "r") as f:
             for line in f.read().split('\n'):
                 if offset>0:
@@ -68,7 +78,7 @@ def getAuditPart(filename,part,offset=0):
                         lineNumber+=1
                         continue
                 li = line.strip()
-                if li.startswith('{"transaction":{"time":"'):
+                if filetype == "JSON":
                     import json
                     if part == "LOG":
                         return str(json.loads(li)['request']['request_line'])
@@ -116,6 +126,11 @@ def getAuditPart(filename,part,offset=0):
                         captureFlag = False
                 elif li.startswith("--") and li.endswith("-E--"):
                     if part == "RESPONSE-BODY":
+                        captureFlag = True
+                    else:
+                        captureFlag = False
+                elif li.startswith("--") and li.endswith("-I--"): # Alternative request body
+                    if part == "REQUEST-BODY" and captureFlag == False:
                         captureFlag = True
                     else:
                         captureFlag = False
